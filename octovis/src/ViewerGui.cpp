@@ -29,9 +29,11 @@
 #include <octovis/ViewerGui.h>
 #include <octovis/ColorOcTreeDrawer.h>
 #include <octomap/MapCollection.h>
+#include <octomap/LabelOcTree.h>
+
 //Dummy object definition to ensure VS2012 does not drop the StaticMemberInitializer, causing this tree failing to register.
 octomap::ColorOcTree colortreeTmp(0);
-
+octomap::LabelOcTree dummy(0.1);
 
 #define _MAXRANGE_URG 5.1
 #define _MAXRANGE_SICK 50.0

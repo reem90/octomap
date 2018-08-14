@@ -35,12 +35,10 @@ public:
             VOXEL_OCCUPIED_NOT_INTEREST 		= (uint8_t)8
         } ;
 
-    public:
         enum VoxelClass{
             VOXEL_CHAIR 				= (uint8_t)8 ,
             VOXEL_TABLE 				= (uint8_t)8 ,
             VOXEL_WALL                       	= (uint8_t)8 ,
-            VOXEL_CEILING                   	= (uint8_t)8 ,
             VOXEL_FLOOR                        	= (uint8_t)8 ,
             VOXEL_NOT_LABELED                      	= (uint8_t)8 ,
         } ;
@@ -57,40 +55,24 @@ public:
             interest_value (0)  {}
 
         // constructor
-        Label(uint8_t _r, uint8_t _g, uint8_t _b, VoxelType _type,VoxelClass _object_class,uint8_t _object_id,uint8_t _object_certainty,uint8_t _interest_value) :
-            r(255),
-            g(255),
-            b(255),
-            type(VOXEL_UNKNOWN),
-            object_class(VOXEL_NOT_LABELED),
-            object_ID(-1),
-            object_certainty(0),
-            interest_value(0)
-        {
-            r=_r ;
-            g=_g ;
-            b=_b ;
-            type = _type ;
-            object_class = _object_class ;
-            object_ID = _object_id ;
-            object_certainty = _object_certainty ;
-            interest_value = _interest_value ;
-        }
+        Label(uint8_t _r, uint8_t _g, uint8_t _b, VoxelType _type,VoxelClass _object_class,uint8_t _object_id,double _object_certainty,uint8_t _interest_value) :
+            r(_r),
+            g(_g),
+            b(_b),
+            type(_type),
+            object_class(_object_class),
+            object_ID(_object_id),
+            object_certainty(_object_certainty),
+            interest_value(_interest_value) {}
 
 
         // constructor to update the interest value only
         // The that is called from the function getAverageChildLabel
         Label(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _interest_value) :
-            r(255),
-            g(255),
-            b(255),
-            interest_value(0)
-        {
-            interest_value = _interest_value ;
-            r=_r ;
-            g=_g ;
-            b=_b ;
-        }
+            r(_r),
+            g(_g),
+            b(_b),
+            interest_value(_interest_value){ }
 
         // constructor
         Label(uint8_t _interest_value) :
@@ -101,10 +83,7 @@ public:
             object_class(VOXEL_NOT_LABELED),
             object_ID(-1),
             object_certainty(0),
-            interest_value(0)
-        {
-            interest_value = _interest_value ;
-        }
+            interest_value(_interest_value){}
 
 
         inline bool operator== (const Label &other) const {
@@ -119,7 +98,7 @@ public:
         VoxelType type ;
         VoxelClass object_class ;
         uint8_t object_ID ;
-        uint8_t object_certainty ;
+        double object_certainty ;
         uint8_t interest_value ;
     };
 
@@ -143,6 +122,10 @@ public:
     {
         this->label.interest_value = _interest_value;
     }
+    inline void  setLabelCertainty(double _certainty_value)
+    {
+        this->label.object_certainty = _certainty_value;
+    }
     inline void  setLabel(uint8_t _r,uint8_t _g,uint8_t _b,uint8_t _interest_value)
     {
         this->label.r = _r;
@@ -152,6 +135,7 @@ public:
 
     }
 
+    double getR() {return this->label.r;}
     Label& getLabel() { return label; }
 
     // has any label been integrated? (pure white is very unlikely...)
@@ -170,9 +154,9 @@ public:
     // file I/O
     std::istream& readData(std::istream &s);
     std::ostream& writeData(std::ostream &s) const;
-    
 protected:
     Label label;
+
 };
 
 
@@ -202,6 +186,7 @@ public:
     // set node interest value and color at given key or coordinate. Replaces previous color.
     LabelOcTreeNode* setNodeLabel(const OcTreeKey& key,
                                   uint8_t r, uint8_t g, uint8_t b,uint8_t interest_val);
+
 
     LabelOcTreeNode* setNodeLabel(float x, float y, float z,
                                   uint8_t r, uint8_t g, uint8_t b,uint8_t interest_val ) {

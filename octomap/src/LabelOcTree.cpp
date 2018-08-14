@@ -39,14 +39,22 @@ namespace octomap {
 // node implementation  --------------------------------------
 std::ostream& LabelOcTreeNode::writeData(std::ostream &s) const {
     s.write((const char*) &value, sizeof(value)); // occupancy
-    s.write((const char*) &label, sizeof(Label)); // label
+    s.write((const char*) &label, sizeof(Label)); // color
+    //s.write((const char*) &label.interest_value, sizeof(label.interest_value)); // occupancy
+    //s.write((const char*) &label.type, sizeof(label.type)); // label
     // TODO: only write the type
     return s;
 }
 
+
+
+
 std::istream& LabelOcTreeNode::readData(std::istream &s) {
     s.read((char*) &value, sizeof(value)); // occupancy
-    s.read((char*) &label, sizeof(Label)); // label
+    s.read((char*) &label, sizeof(Label)); // color
+
+    //s.read((char*) &label.interest_value, sizeof(label.interest_value)); // occupancy
+    //s.read((char*) &label.type, sizeof(label.type)); // label
     // TODO: only read the type
 
     return s;
@@ -135,6 +143,8 @@ bool LabelOcTree::pruneNode(LabelOcTreeNode* node) {
 }
 
 bool LabelOcTree::isNodeCollapsible(const LabelOcTreeNode* node) const{
+    return false ; //ADDEd from s, Disable it for now
+
     // all children must exist, must not have children of
     // their own and have the same occupancy probability
     if (!nodeChildExists(node, 0))

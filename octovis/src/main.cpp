@@ -26,6 +26,7 @@
 #include <QApplication>
 #include <octovis/ViewerGui.h>
 #include <stdlib.h> //strtol
+#include <octomap/LabelOcTree.h>
 
 int main(int argc, char *argv[]) {
 
