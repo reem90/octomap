@@ -61,10 +61,10 @@ std::istream& LabelOcTreeNode::readData(std::istream &s) {
 }
 
 LabelOcTreeNode::Label LabelOcTreeNode::getAverageChildLabel() const {
-    int mr = 0;
-    int mg = 0;
-    int mb = 0;
-    int ml = 0;
+    double mr = 255;
+    double mg = 0;
+    double mb = 0;
+    double ml = 0;
 
 
     int c = 0;
@@ -90,7 +90,7 @@ LabelOcTreeNode::Label LabelOcTreeNode::getAverageChildLabel() const {
         mb /= c;
         ml /= c ;
 
-        return Label( (uint8_t) mr, (uint8_t) mg, (uint8_t) mb,(uint8_t) ml);
+        return Label( (double) mr, (double) mg, (double) mb,(double) ml);
     }
     else { // no child had a label other than white
         return Label();
@@ -110,10 +110,10 @@ LabelOcTree::LabelOcTree(double resolution)
 };
 
 LabelOcTreeNode* LabelOcTree::setNodeLabel(const OcTreeKey& key,
-                                           uint8_t r,
-                                           uint8_t g,
-                                           uint8_t b,
-                                           uint8_t interest_value){
+                                           double r,
+                                           double g,
+                                           double b,
+                                           double interest_value){
     LabelOcTreeNode* n = search (key);
     if (n != 0) {
         n->setLabel(r, g, b,interest_value);
@@ -164,10 +164,10 @@ bool LabelOcTree::isNodeCollapsible(const LabelOcTreeNode* node) const{
 }
 
 LabelOcTreeNode* LabelOcTree::averageNodeLabel(const OcTreeKey& key,
-                                               uint8_t r,
-                                               uint8_t g,
-                                               uint8_t b,
-                                               uint8_t interest_value) {
+                                               double r,
+                                               double g,
+                                               double b,
+                                               double interest_value) {
     LabelOcTreeNode* n = search(key);
     if (n != 0) {
         if (n->isLabelSet()) {
@@ -182,23 +182,23 @@ LabelOcTreeNode* LabelOcTree::averageNodeLabel(const OcTreeKey& key,
 }
 
 LabelOcTreeNode* LabelOcTree::integrateNodeLabel(const OcTreeKey& key,
-                                                 uint8_t r,
-                                                 uint8_t g,
-                                                 uint8_t b,
-                                                 uint8_t interest_value) {
+                                                 double r,
+                                                 double g,
+                                                 double b,
+                                                 double interest_value) {
     LabelOcTreeNode* n = search (key);
     if (n != 0) {
         if (n->isLabelSet()) {
             LabelOcTreeNode::Label prev_label = n->getLabel();
             double node_prob = n->getOccupancy();
 
-            uint8_t new_interest_value = (uint8_t) ((double) prev_label.r * node_prob
+            double new_interest_value = (double) ((double) prev_label.r * node_prob
                                                     +  (double) interest_value * (0.99-node_prob));
-            uint8_t new_r = (uint8_t) ((double) prev_label.r * node_prob
+            double new_r = (double) ((double) prev_label.r * node_prob
                                        +  (double) r * (0.99-node_prob));
-            uint8_t new_g = (uint8_t) ((double) prev_label.g * node_prob
+            double new_g = (double) ((double) prev_label.g * node_prob
                                        +  (double) g * (0.99-node_prob));
-            uint8_t new_b = (uint8_t) ((double) prev_label.b * node_prob
+            double new_b = (double) ((double) prev_label.b * node_prob
                                        +  (double) b * (0.99-node_prob));
             n->setLabel(new_r, new_g, new_b,new_interest_value);
         }

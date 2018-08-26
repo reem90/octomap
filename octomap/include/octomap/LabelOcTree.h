@@ -27,20 +27,21 @@ public:
     
     class Label {
     public:
+
         enum VoxelType{
-            VOXEL_FREE 				= (uint8_t)8 ,
-            VOXEL_UNKNOWN 				= (uint8_t)8 ,
-            VOXEL_OCCUPIED_INTEREST_NOT_VISITED 	= (uint8_t)8 ,
-            VOXEL_OCCUPIED_INTEREST_VISITED		= (uint8_t)8 ,
-            VOXEL_OCCUPIED_NOT_INTEREST 		= (uint8_t)8
+            VOXEL_FREE                                  = (uint8_t)0 ,
+            VOXEL_UNKNOWN                           	= (uint8_t)1 ,
+            VOXEL_OCCUPIED_INTEREST_NOT_VISITED     	= (uint8_t)2 ,
+            VOXEL_OCCUPIED_INTEREST_VISITED             = (uint8_t)3 ,
+            VOXEL_OCCUPIED_NOT_INTEREST                 = (uint8_t)4
         } ;
 
         enum VoxelClass{
-            VOXEL_CHAIR 				= (uint8_t)8 ,
-            VOXEL_TABLE 				= (uint8_t)8 ,
-            VOXEL_WALL                       	= (uint8_t)8 ,
-            VOXEL_FLOOR                        	= (uint8_t)8 ,
-            VOXEL_NOT_LABELED                      	= (uint8_t)8 ,
+            VOXEL_FLOOR                              	= (uint8_t)0 ,
+            VOXEL_WALL                              	= (uint8_t)1 ,
+            VOXEL_TABLE                                 = (uint8_t)2 ,
+            VOXEL_CHAIR                                 = (uint8_t)3 ,
+            VOXEL_NOT_LABELED                         	= (uint8_t)4 ,
         } ;
 
         // Empty constructor
@@ -55,7 +56,7 @@ public:
             interest_value (0)  {}
 
         // constructor
-        Label(uint8_t _r, uint8_t _g, uint8_t _b, VoxelType _type,VoxelClass _object_class,uint8_t _object_id,double _object_certainty,uint8_t _interest_value) :
+        Label(double _r, double _g, double _b, VoxelType _type,VoxelClass _object_class,uint8_t _object_id,double _object_certainty,double _interest_value) :
             r(_r),
             g(_g),
             b(_b),
@@ -68,14 +69,14 @@ public:
 
         // constructor to update the interest value only
         // The that is called from the function getAverageChildLabel
-        Label(uint8_t _r, uint8_t _g, uint8_t _b, uint8_t _interest_value) :
+        Label(double _r, double _g, double _b, double _interest_value) :
             r(_r),
             g(_g),
             b(_b),
             interest_value(_interest_value){ }
 
         // constructor
-        Label(uint8_t _interest_value) :
+        Label(double _interest_value) :
             r(255),
             g(255),
             b(255),
@@ -94,12 +95,12 @@ public:
         }
 
         // Voxel information
-        uint8_t r, g, b;
+        double r, g, b;
         VoxelType type ;
         VoxelClass object_class ;
         uint8_t object_ID ;
         double object_certainty ;
-        uint8_t interest_value ;
+        double interest_value ;
     };
 
 public:
@@ -118,7 +119,7 @@ public:
 
     inline Label getLabel() const { return label; }
     inline void  setLabel(Label l) {this->label = l; }
-    inline void  setLabel(uint8_t _interest_value)
+    inline void  setLabel(double _interest_value)
     {
         this->label.interest_value = _interest_value;
     }
@@ -126,7 +127,7 @@ public:
     {
         this->label.object_certainty = _certainty_value;
     }
-    inline void  setLabel(uint8_t _r,uint8_t _g,uint8_t _b,uint8_t _interest_value)
+    inline void  setLabel(double _r,double _g,double _b,double _interest_value)
     {
         this->label.r = _r;
         this->label.g = _g;
@@ -144,7 +145,9 @@ public:
 //        return (  (label.r != 255) || (label.g != 255) || (label.b != 255));
 //    }
     inline bool isLabelSet() const {
+       // return (label.interest_value != -1);
         return (label.interest_value != -1);
+
     }
     void updateLabelChildren();
 
@@ -185,11 +188,11 @@ public:
 
     // set node interest value and color at given key or coordinate. Replaces previous color.
     LabelOcTreeNode* setNodeLabel(const OcTreeKey& key,
-                                  uint8_t r, uint8_t g, uint8_t b,uint8_t interest_val);
+                                  double r, double g, double b,double interest_val);
 
 
     LabelOcTreeNode* setNodeLabel(float x, float y, float z,
-                                  uint8_t r, uint8_t g, uint8_t b,uint8_t interest_val ) {
+                                  double r, double g, double b,double interest_val ) {
 
         OcTreeKey key;
         if (!this->coordToKeyChecked(point3d(x,y,z), key)) return NULL;
@@ -198,10 +201,10 @@ public:
 
     // integrate color measurement at given key or coordinate. Average with previous color
     LabelOcTreeNode* averageNodeLabel(const OcTreeKey& key,
-                                      uint8_t r, uint8_t g, uint8_t b,uint8_t interest_val);
+                                      double r, double g, double b,double interest_val);
     
     LabelOcTreeNode* averageNodeLabel(float x, float y, float z,
-                                      uint8_t r, uint8_t g, uint8_t b, uint8_t interest_val) {
+                                      double r, double g, double b, double interest_val) {
         OcTreeKey key;
         if (!this->coordToKeyChecked(point3d(x,y,z), key)) return NULL;
         return averageNodeLabel(key,r,g,b,interest_val);
@@ -209,10 +212,10 @@ public:
 
     // integrate label measurement at given key or coordinate. Average with previous label
     LabelOcTreeNode* integrateNodeLabel(const OcTreeKey& key,
-                                        uint8_t r,uint8_t g, uint8_t b,uint8_t interest_val);
+                                        double r,double g, double b,double interest_val);
     
     LabelOcTreeNode* integrateNodeLabel(float x, float y,float z,
-                                        uint8_t r,uint8_t g, uint8_t b,uint8_t interest_val) {
+                                        double r,double g, double b,double interest_val) {
         OcTreeKey key;
         if (!this->coordToKeyChecked(point3d(x,y,z), key)) return NULL;
         return integrateNodeLabel(key,r,g,b,interest_val);
