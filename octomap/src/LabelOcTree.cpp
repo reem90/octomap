@@ -61,16 +61,14 @@ std::istream& LabelOcTreeNode::readData(std::istream &s) {
 }
 
 LabelOcTreeNode::Label LabelOcTreeNode::getAverageChildLabel() const {
-    double mr = 255;
+    double mr = 0;
     double mg = 0;
     double mb = 0;
     double ml = 0;
-    double r_o_b = 0;
-    int num_of_visit = 0 ;
-
+    int mnov = 0 ;
 
     int c = 0;
-    
+
     if (children != NULL){
         for (int i=0; i<8; i++) {
             LabelOcTreeNode* child = static_cast<LabelOcTreeNode*>(children[i]);
@@ -80,21 +78,21 @@ LabelOcTreeNode::Label LabelOcTreeNode::getAverageChildLabel() const {
                 mg += child->getLabel().g;
                 mb += child->getLabel().b;
                 ml += child->getLabel().interest_value ;
-                r_o_b += child->getLabel().res_of_obs ;
-                num_of_visit += child->getLabel().num_of_vis ;
+                mnov +=child->getLabel().num_of_vis ;
+
                 ++c;
             }
         }
     }
-    
+
     if (c > 0) {
         mr /= c;
         mg /= c;
         mb /= c;
         ml /= c ;
-        r_o_b/=c ;
-        num_of_visit /= c ;
-        return Label( (double) mr, (double) mg, (double) mb,(double) ml,(double) r_o_b, num_of_visit);
+        mnov /=c ;
+
+        return Label( (double) mr, (double) mg, (double) mb,(double) ml , (int) mnov);
     }
     else { // no child had a label other than white
         return Label();
@@ -118,11 +116,10 @@ LabelOcTreeNode* LabelOcTree::setNodeLabel(const OcTreeKey& key,
                                            double g,
                                            double b,
                                            double interest_value,
-                                           double res_of_obs,
                                            int num_of_vis){
     LabelOcTreeNode* n = search (key);
     if (n != 0) {
-        n->setLabel(r, g, b,interest_value,res_of_obs,num_of_vis);
+        n->setLabel(r, g, b,interest_value,num_of_vis);
         // TODO: CHECK WHAT TO RETURN .. It is important
     }
     return n;
@@ -134,7 +131,7 @@ bool LabelOcTree::pruneNode(LabelOcTreeNode* node) {
 
     // set value to children's values (all assumed equal)
     node->copyData(*(getNodeChild(node, 0)));
-    
+
     if (node->isLabelSet()) // TODO check
         node->setLabel(node->getAverageChildLabel());
 
@@ -155,7 +152,7 @@ bool LabelOcTree::isNodeCollapsible(const LabelOcTreeNode* node) const{
     // their own and have the same occupancy probability
     if (!nodeChildExists(node, 0))
         return false;
-    
+
     const LabelOcTreeNode* firstChild = getNodeChild(node, 0);
     if (nodeHasChildren(firstChild))
         return false;
@@ -165,7 +162,7 @@ bool LabelOcTree::isNodeCollapsible(const LabelOcTreeNode* node) const{
         if (!nodeChildExists(node, i) || nodeHasChildren(getNodeChild(node, i)) || !(getNodeChild(node, i)->getValue() == firstChild->getValue()))
             return false;
     }
-    
+
     return true;
 }
 
@@ -174,16 +171,15 @@ LabelOcTreeNode* LabelOcTree::averageNodeLabel(const OcTreeKey& key,
                                                double g,
                                                double b,
                                                double interest_value,
-                                               double res_of_obs,
-                                               int num_of_vis) {
+                                               int num_of_vis ) {
     LabelOcTreeNode* n = search(key);
     if (n != 0) {
         if (n->isLabelSet()) {
             LabelOcTreeNode::Label prev_label = n->getLabel();
-            n->setLabel( (prev_label.r + r)/2, (prev_label.g + g)/2, (prev_label.b + b)/2 , (prev_label.interest_value+interest_value)/2, (prev_label.res_of_obs + res_of_obs)/2 , (prev_label.num_of_vis+ num_of_vis)/2);
+            n->setLabel( (prev_label.r + r)/2, (prev_label.g + g)/2, (prev_label.b + b)/2 , (prev_label.interest_value+interest_value)/2, (prev_label.num_of_vis+num_of_vis)/2);
         }
         else {
-            n->setLabel(r, g, b,interest_value,res_of_obs,num_of_vis);
+            n->setLabel(r, g, b,interest_value,num_of_vis);
         }
     }
     return n;
@@ -194,8 +190,7 @@ LabelOcTreeNode* LabelOcTree::integrateNodeLabel(const OcTreeKey& key,
                                                  double g,
                                                  double b,
                                                  double interest_value,
-                                                 double res_of_obs,
-                                                 int num_of_vis) {
+                                                int num_of_vis) {
     LabelOcTreeNode* n = search (key);
     if (n != 0) {
         if (n->isLabelSet()) {
@@ -203,23 +198,19 @@ LabelOcTreeNode* LabelOcTree::integrateNodeLabel(const OcTreeKey& key,
             double node_prob = n->getOccupancy();
 
             double new_interest_value = (double) ((double) prev_label.r * node_prob
-                                                  +  (double) interest_value * (0.99-node_prob));
-
-            double new_res_of_obs = (double) ((double) prev_label.res_of_obs * node_prob
-                                              +  (double) res_of_obs * (0.99-node_prob));
-            int new_num_of_vis = (int) ((double) prev_label.num_of_vis * node_prob
-                                        +  (double) num_of_vis * (0.99-node_prob));
-
+                                                    +  (double) interest_value * (0.99-node_prob));
             double new_r = (double) ((double) prev_label.r * node_prob
-                                     +  (double) r * (0.99-node_prob));
+                                       +  (double) r * (0.99-node_prob));
             double new_g = (double) ((double) prev_label.g * node_prob
-                                     +  (double) g * (0.99-node_prob));
+                                       +  (double) g * (0.99-node_prob));
             double new_b = (double) ((double) prev_label.b * node_prob
-                                     +  (double) b * (0.99-node_prob));
-            n->setLabel(new_r, new_g, new_b,new_interest_value,new_res_of_obs,new_num_of_vis);
+                                       +  (double) b * (0.99-node_prob));
+            double new_num_of_vis = (double) ((double) prev_label.num_of_vis * node_prob
+                                       +  (double) num_of_vis * (0.99-node_prob));
+            n->setLabel(new_r, new_g, new_b,new_interest_value,new_num_of_vis);
         }
         else {
-            n->setLabel(r, g, b,interest_value,res_of_obs,num_of_vis);
+            n->setLabel(r, g, b,interest_value,num_of_vis);
         }
     }
     return n;
@@ -253,20 +244,21 @@ void LabelOcTree::writeLabelHistogram(std::string filename) {
 #else
     // build RGB histogram
     std::vector<int> histogram_interest_value (256,0);
-    std::vector<int> histogram_res_of_obs_value (256,0);
     std::vector<int> histogram_r (256,0);
     std::vector<int> histogram_g (256,0);
     std::vector<int> histogram_b (256,0);
+    std::vector<int> histogram_num_of_vis (256,0);
 
     for(LabelOcTree::tree_iterator it = this->begin_tree(),
         end=this->end_tree(); it!= end; ++it) {
         if (!it.isLeaf() || !this->isNodeOccupied(*it)) continue;
         LabelOcTreeNode::Label& c = it->getLabel();
         ++histogram_interest_value[c.interest_value];
-        ++histogram_res_of_obs_value[c.res_of_obs];
         ++histogram_r[c.r];
         ++histogram_g[c.g];
         ++histogram_b[c.b];
+        ++histogram_num_of_vis[c.b];
+
     }
     // plot data
     FILE *gui = popen("gnuplot ", "w");
@@ -282,30 +274,31 @@ void LabelOcTree::writeLabelHistogram(std::string filename) {
 
     for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_interest_value[i]);
     fprintf(gui,"0 0\n"); fprintf(gui, "e\n");
-    for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_res_of_obs_value[i]);
-    fprintf(gui,"0 0\n"); fprintf(gui, "e\n");
     for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_r[i]);
     fprintf(gui,"0 0\n"); fprintf(gui, "e\n");
     for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_g[i]);
     fprintf(gui,"0 0\n"); fprintf(gui, "e\n");
     for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_b[i]);
     fprintf(gui,"0 0\n"); fprintf(gui, "e\n");
+        for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_num_of_vis[i]);
+    fprintf(gui,"0 0\n"); fprintf(gui, "e\n");
+
     for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_interest_value[i]);
     fprintf(gui, "e\n");
-    for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_res_of_obs_value[i]);
-    fprintf(gui, "e\n");
     for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_r[i]);
     fprintf(gui, "e\n");
     for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_g[i]);
     fprintf(gui, "e\n");
     for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_b[i]);
+    fprintf(gui, "e\n");
+    for (int i=0; i<256; ++i) fprintf(gui,"%d %d\n", i, histogram_num_of_vis[i]);
     fprintf(gui, "e\n");
     fflush(gui);
 #endif
 }
 
 std::ostream& operator<<(std::ostream& out, LabelOcTreeNode::Label const& l) {
-    return out << '(' <<(unsigned int)l.interest_value << (unsigned int)l.r << ' ' << (unsigned int)l.g << ' ' << (unsigned int)l.b << (unsigned int)l.res_of_obs << ')';
+    return out << '(' <<(double)l.interest_value << (double)l.r << ' ' << (double)l.g << ' ' << (double)l.b << ' ' << (int)l.num_of_vis<< ')';
 }
 
 
